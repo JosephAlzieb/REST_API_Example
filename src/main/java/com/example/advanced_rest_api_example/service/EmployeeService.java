@@ -1,55 +1,55 @@
 package com.example.advanced_rest_api_example.service;
 
+import com.example.advanced_rest_api_example.dto.EmployeeRequestDTO;
+import com.example.advanced_rest_api_example.dto.EmployeeResponseDTO;
 import com.example.advanced_rest_api_example.exception.ResourceNotFoundException;
+import com.example.advanced_rest_api_example.logging.HasLogger;
+import com.example.advanced_rest_api_example.mapper.EmployeeMapper;
 import com.example.advanced_rest_api_example.model.Employee;
+import com.example.advanced_rest_api_example.repository.EmployeeRepository;
+import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
-import java.util.*;
-import java.util.concurrent.atomic.AtomicLong;
-
 @Service
-public class EmployeeService {
+public class EmployeeService implements HasLogger {
+    private final EmployeeRepository repository;
+    private final EmployeeMapper mapper;
 
-    private final Map<Long, Employee> employeeDB = new HashMap<>();
-    private final AtomicLong idCounter = new AtomicLong();
-
-    public List<Employee> getAll(Optional<String> positionFilter) {
-        if (positionFilter.isPresent()) {
-            String pos = positionFilter.get().toLowerCase();
-            List<Employee> filtered = new ArrayList<>();
-            for (Employee e : employeeDB.values()) {
-                if (e.getPosition().toLowerCase().contains(pos)) {
-                    filtered.add(e);
-                }
-            }
-            return filtered;
-        }
-        return new ArrayList<>(employeeDB.values());
+    public EmployeeService(EmployeeRepository repository, EmployeeMapper mapper) {
+        this.repository = repository;
+        this.mapper = mapper;
     }
 
-    public Employee getById(Long id) {
-        Employee emp = employeeDB.get(id);
-        if (emp == null) throw new ResourceNotFoundException("Mitarbeiter nicht gefunden: " + id);
-        return emp;
+    public List<EmployeeResponseDTO> findAll(Optional<String> position) {
+        return repository.findAll(position).stream()
+            .map(mapper::toDTO)
+            .collect(Collectors.toList());
     }
 
-    public Employee create(Employee emp) {
-        emp.setId(idCounter.incrementAndGet());
-        employeeDB.put(emp.getId(), emp);
-        return emp;
+    public EmployeeResponseDTO findById(Long id) {
+        return repository.findById(id)
+            .map(mapper::toDTO)
+            .orElseThrow(() -> new ResourceNotFoundException("Employee not found"));
     }
 
-    public Employee update(Long id, Employee emp) {
-        if (!employeeDB.containsKey(id))
-            throw new ResourceNotFoundException("Mitarbeiter nicht gefunden: " + id);
-        emp.setId(id);
-        employeeDB.put(id, emp);
-        return emp;
+    public EmployeeResponseDTO create(EmployeeRequestDTO emp) {
+        Employee e = mapper.toEntity(emp);
+        EmployeeResponseDTO saved = mapper.toDTO(repository.create(e));
+        getLogger().info("Mitarbeiter gespeichert mit ID: {}", saved.getId());
+        return saved;
+    }
+
+    public EmployeeResponseDTO update(Long id, EmployeeRequestDTO emp) {
+        Employee e = mapper.toEntity(emp);
+        EmployeeResponseDTO saved = mapper.toDTO(repository.update(id, e));
+        getLogger().info("Mitarbeiter aktualisiert mit ID: {}", saved.getId());
+        return saved;
     }
 
     public void delete(Long id) {
-        if (!employeeDB.containsKey(id))
-            throw new ResourceNotFoundException("Mitarbeiter nicht gefunden: " + id);
-        employeeDB.remove(id);
+        repository.delete(id);
+        getLogger().info("Mitarbeiter mit ID {} gelöscht", id);
     }
 }

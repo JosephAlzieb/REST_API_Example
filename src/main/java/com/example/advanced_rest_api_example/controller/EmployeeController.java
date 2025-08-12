@@ -2,31 +2,29 @@ package com.example.advanced_rest_api_example.controller;
 
 import com.example.advanced_rest_api_example.dto.EmployeeRequestDTO;
 import com.example.advanced_rest_api_example.dto.EmployeeResponseDTO;
-import com.example.advanced_rest_api_example.mapper.EmployeeMapper;
-import com.example.advanced_rest_api_example.model.Employee;
 import com.example.advanced_rest_api_example.service.EmployeeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/v1/employees")
+@Tag(name = "Employee API", description = "CRUD operations for employees")
 public class EmployeeController {
 
     private final EmployeeService service;
-    private final EmployeeMapper mapper;
 
-    public EmployeeController(EmployeeService service, EmployeeMapper mapper) {
+    public EmployeeController(EmployeeService service) {
         this.service = service;
-        this.mapper = mapper;
     }
 
     @Operation(summary = "Alle Mitarbeiter abrufen", description = "Optional nach Position filtern")
@@ -35,12 +33,10 @@ public class EmployeeController {
             @ApiResponse(responseCode = "500", description = "Interner Serverfehler")
     })
     @GetMapping
-    public List<EmployeeResponseDTO> getAll(
+    public ResponseEntity<List<EmployeeResponseDTO>> getAll(
             @Parameter(description = "Optionaler Positionsfilter")
             @RequestParam Optional<String> position) {
-        return service.getAll(position).stream()
-                .map(mapper::toDTO)
-                .collect(Collectors.toList());
+        return ResponseEntity.ok(service.findAll(position));
     }
 
     @Operation(summary = "Mitarbeiter per ID abrufen")
@@ -49,10 +45,10 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "Mitarbeiter nicht gefunden")
     })
     @GetMapping("/{id}")
-    public EmployeeResponseDTO getById(
+    public ResponseEntity<EmployeeResponseDTO> getById(
             @Parameter(description = "ID des Mitarbeiters", required = true)
             @PathVariable Long id) {
-        return mapper.toDTO(service.getById(id));
+        return ResponseEntity.ok(service.findById(id));
     }
 
     @Operation(summary = "Neuen Mitarbeiter erstellen")
@@ -62,11 +58,11 @@ public class EmployeeController {
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public EmployeeResponseDTO create(
+    public ResponseEntity<EmployeeResponseDTO> create(
             @Parameter(description = "Mitarbeiter Daten", required = true)
             @Valid @RequestBody EmployeeRequestDTO dto) {
-        Employee emp = mapper.toEntity(dto);
-        return mapper.toDTO(service.create(emp));
+        EmployeeResponseDTO created = service.create(dto);
+        return ResponseEntity.status(201).body(created);
     }
 
     @Operation(summary = "Mitarbeiter aktualisieren")
@@ -76,13 +72,13 @@ public class EmployeeController {
             @ApiResponse(responseCode = "404", description = "Mitarbeiter nicht gefunden")
     })
     @PutMapping("/{id}")
-    public EmployeeResponseDTO update(
+    public ResponseEntity<EmployeeResponseDTO> update(
             @Parameter(description = "ID des Mitarbeiters", required = true)
             @PathVariable Long id,
             @Parameter(description = "Aktualisierte Mitarbeiter Daten", required = true)
             @Valid @RequestBody EmployeeRequestDTO dto) {
-        Employee emp = mapper.toEntity(dto);
-        return mapper.toDTO(service.update(id, emp));
+        EmployeeResponseDTO updated = service.update(id, dto);
+        return ResponseEntity.status(200).body(updated);
     }
 
     @Operation(summary = "Mitarbeiter löschen")
@@ -92,9 +88,9 @@ public class EmployeeController {
     })
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(
+    public ResponseEntity<Void> delete(
             @Parameter(description = "ID des Mitarbeiters", required = true)
             @PathVariable Long id) {
-        service.delete(id);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }

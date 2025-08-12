@@ -1,5 +1,4 @@
 package com.example.advanced_rest_api_example.model;
-
 public class Employee {
 
     private Long id;

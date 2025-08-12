@@ -6,7 +6,7 @@ import jakarta.validation.constraints.Size;
 public class EmployeeRequestDTO {
 
     @NotBlank(message = "Name darf nicht leer sein")
-    @Size(min = 2, max = 50)
+    @Size(min = 2, max = 50, message = "Name muss zwischen 2 und 50 Zeichen sein")
     private String name;
 
     @NotBlank(message = "Position darf nicht leer sein")

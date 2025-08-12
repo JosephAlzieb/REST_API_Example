@@ -5,6 +5,9 @@ import com.example.advanced_rest_api_example.dto.EmployeeResponseDTO;
 import com.example.advanced_rest_api_example.model.Employee;
 import org.springframework.stereotype.Component;
 
+/**
+ * eventuell MapStruct nutzen - (automatisierte Konvertierung Controller ↔ DTO ↔ Entity)
+ */
 @Component
 public class EmployeeMapper {
 
