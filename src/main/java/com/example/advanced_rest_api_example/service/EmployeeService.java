@@ -8,6 +8,9 @@ import com.example.advanced_rest_api_example.mapper.EmployeeMapper;
 import com.example.advanced_rest_api_example.model.Employee;
 import com.example.advanced_rest_api_example.repository.EmployeeRepository;
 import java.util.Optional;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -22,8 +25,10 @@ public class EmployeeService implements HasLogger {
         this.mapper = mapper;
     }
 
+    @Cacheable("employees")
     public Page<EmployeeResponseDTO> findAll(Optional<String> position, Pageable pageable) {
         getLogger().info("Alle Mitarbeiter skip: {}, limit: {}, sort: {}", pageable.getOffset(), pageable.getPageSize(), pageable.getSort());
+        simulateSlowService();
         return repository.findAll(position, pageable)
             .map(mapper::toDTO);
     }
@@ -41,6 +46,7 @@ public class EmployeeService implements HasLogger {
         return saved;
     }
 
+    @CachePut(value = "employees", key = "#id")
     public EmployeeResponseDTO update(Long id, EmployeeRequestDTO emp) {
         Employee e = mapper.toEntity(emp);
         EmployeeResponseDTO saved = mapper.toDTO(repository.update(id, e));
@@ -48,8 +54,16 @@ public class EmployeeService implements HasLogger {
         return saved;
     }
 
+    @CacheEvict(value = "employees", key = "#id")
     public void delete(Long id) {
         repository.delete(id);
         getLogger().info("Mitarbeiter mit ID {} gelöscht", id);
+    }
+
+    /**
+     * Nur zum Testen vom Cache
+     */
+    private void simulateSlowService() {
+        try { Thread.sleep(3000); } catch (InterruptedException e) { }
     }
 }
