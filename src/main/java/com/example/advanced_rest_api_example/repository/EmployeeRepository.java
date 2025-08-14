@@ -8,6 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 @Repository
@@ -16,7 +19,8 @@ public class EmployeeRepository {
   private final Map<Long, Employee> employeeDB = new HashMap<>();
   private final AtomicLong idCounter = new AtomicLong();
 
-  public List<Employee> findAll(Optional<String> positionFilter) {
+  public Page<Employee> findAll(Optional<String> positionFilter, Pageable pageable) {
+    List<Employee> employeeList = null;
     if (positionFilter.isPresent()) {
       String pos = positionFilter.get().toLowerCase();
       List<Employee> filtered = new ArrayList<>();
@@ -25,9 +29,18 @@ public class EmployeeRepository {
           filtered.add(e);
         }
       }
-      return filtered;
+      employeeList = filtered;
+    } else {
+      employeeList = employeeDB.values().stream().toList();
     }
-    return new ArrayList<>(employeeDB.values());
+
+    List<Employee> employeePage = employeeList.stream()
+        .skip(pageable.getOffset())
+        .limit(pageable.getPageSize())
+        .toList();
+
+    Page<Employee> page = new PageImpl(employeePage, pageable, employeeList.size());
+    return page;
   }
 
   public Optional<Employee> findById(Long id) {

@@ -9,11 +9,13 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.Optional;
 
 @RestController
@@ -33,10 +35,12 @@ public class EmployeeController {
             @ApiResponse(responseCode = "500", description = "Interner Serverfehler")
     })
     @GetMapping
-    public ResponseEntity<List<EmployeeResponseDTO>> getAll(
-            @Parameter(description = "Optionaler Positionsfilter")
-            @RequestParam Optional<String> position) {
-        return ResponseEntity.ok(service.findAll(position));
+    public ResponseEntity<Page<EmployeeResponseDTO>> getAll(
+        @Parameter(description = "Optionaler Positionsfilter")
+        @RequestParam Optional<String> position,
+        @ParameterObject Pageable pageable) {
+
+        return ResponseEntity.ok(service.findAll(position, pageable));
     }
 
     @Operation(summary = "Mitarbeiter per ID abrufen")

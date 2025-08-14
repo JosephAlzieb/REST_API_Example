@@ -7,9 +7,9 @@ import com.example.advanced_rest_api_example.logging.HasLogger;
 import com.example.advanced_rest_api_example.mapper.EmployeeMapper;
 import com.example.advanced_rest_api_example.model.Employee;
 import com.example.advanced_rest_api_example.repository.EmployeeRepository;
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -22,10 +22,10 @@ public class EmployeeService implements HasLogger {
         this.mapper = mapper;
     }
 
-    public List<EmployeeResponseDTO> findAll(Optional<String> position) {
-        return repository.findAll(position).stream()
-            .map(mapper::toDTO)
-            .collect(Collectors.toList());
+    public Page<EmployeeResponseDTO> findAll(Optional<String> position, Pageable pageable) {
+        getLogger().info("Alle Mitarbeiter skip: {}, limit: {}, sort: {}", pageable.getOffset(), pageable.getPageSize(), pageable.getSort());
+        return repository.findAll(position, pageable)
+            .map(mapper::toDTO);
     }
 
     public EmployeeResponseDTO findById(Long id) {
