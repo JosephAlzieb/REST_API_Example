@@ -20,7 +20,7 @@ public class EmployeeRepository {
   private final AtomicLong idCounter = new AtomicLong();
 
   public Page<Employee> findAll(Optional<String> positionFilter, Pageable pageable) {
-    List<Employee> employeeList = null;
+    List<Employee> employeeList;
     if (positionFilter.isPresent()) {
       String pos = positionFilter.get().toLowerCase();
       List<Employee> filtered = new ArrayList<>();
@@ -39,8 +39,7 @@ public class EmployeeRepository {
         .limit(pageable.getPageSize())
         .toList();
 
-    Page<Employee> page = new PageImpl(employeePage, pageable, employeeList.size());
-    return page;
+    return new PageImpl<>(employeePage, pageable, employeeList.size());
   }
 
   public Optional<Employee> findById(Long id) {

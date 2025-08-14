@@ -95,6 +95,7 @@ public class EmployeeController {
     public ResponseEntity<Void> delete(
             @Parameter(description = "ID des Mitarbeiters", required = true)
             @PathVariable Long id) {
+        service.delete(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 }
