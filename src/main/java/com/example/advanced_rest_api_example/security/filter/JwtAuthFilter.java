@@ -43,7 +43,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                     SecurityContextHolder.getContext().setAuthentication(auth);
                 }
             } catch (JwtException ex) {
-                // ungültiges Token: 401 wird später durch EntryPoint erzeugt
+                throw ex;
             }
         }
         filterChain.doFilter(request, response);
