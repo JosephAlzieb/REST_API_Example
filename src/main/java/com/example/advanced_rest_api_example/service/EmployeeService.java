@@ -29,7 +29,11 @@ public class EmployeeService implements HasLogger {
     public Page<EmployeeResponseDTO> findAll(Optional<String> position, Pageable pageable) {
         getLogger().info("Alle Mitarbeiter skip: {}, limit: {}, sort: {}", pageable.getOffset(), pageable.getPageSize(), pageable.getSort());
         simulateSlowService();
-        return repository.findAll(position, pageable)
+        if (position.isPresent()){
+            return repository.findByPosition(position.get(), pageable)
+                .map(mapper::toDTO);
+        }
+        return repository.findAll(pageable)
             .map(mapper::toDTO);
     }
 
@@ -41,7 +45,7 @@ public class EmployeeService implements HasLogger {
 
     public EmployeeResponseDTO create(EmployeeRequestDTO emp) {
         Employee e = mapper.toEntity(emp);
-        EmployeeResponseDTO saved = mapper.toDTO(repository.create(e));
+        EmployeeResponseDTO saved = mapper.toDTO(repository.save(e));
         getLogger().info("Mitarbeiter gespeichert mit ID: {}", saved.getId());
         return saved;
     }
@@ -49,14 +53,14 @@ public class EmployeeService implements HasLogger {
     @CachePut(value = "employees", key = "#id")
     public EmployeeResponseDTO update(Long id, EmployeeRequestDTO emp) {
         Employee e = mapper.toEntity(emp);
-        EmployeeResponseDTO saved = mapper.toDTO(repository.update(id, e));
+        EmployeeResponseDTO saved = mapper.toDTO(repository.save(e));
         getLogger().info("Mitarbeiter aktualisiert mit ID: {}", saved.getId());
         return saved;
     }
 
     @CacheEvict(value = "employees", key = "#id")
     public void delete(Long id) {
-        repository.delete(id);
+        repository.deleteById(id);
         getLogger().info("Mitarbeiter mit ID {} gelöscht", id);
     }
 
